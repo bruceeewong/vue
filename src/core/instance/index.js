@@ -5,7 +5,8 @@ import { eventsMixin } from './events'
 import { lifecycleMixin } from './lifecycle'
 import { warn } from '../util/index'
 
-// 此处不用 class 的原因是因为要在Vue原型上加属性，方便后续给 Vue 实例混入实例成员
+// 此处不用 class 的原因是因为要在Vue原型上加属性
+// 本模块就是给 Vue 实例混入实例成员
 function Vue (options) {
   // 如果不用 new 调用此构造函数
   if (process.env.NODE_ENV !== 'production' &&
@@ -18,7 +19,7 @@ function Vue (options) {
 
 // 注册 vm 的 _init() 方法, 初始化 vm
 initMixin(Vue)
-// 注册 vm 的 $data / $props / $set /$delete / $watch
+// 注册 vm 的 $data / $props / $set / $delete / $watch
 stateMixin(Vue)
 // 初始化事件相关方法
 // $on / $once / $off / $emit

@@ -54,6 +54,7 @@ export function eventsMixin (Vue: Class<Component>) {
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
     if (Array.isArray(event)) {
+      // 给多个事件，注册同一个事件处理函数
       for (let i = 0, l = event.length; i < l; i++) {
         vm.$on(event[i], fn)
       }
