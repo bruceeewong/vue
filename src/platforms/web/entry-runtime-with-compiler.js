@@ -14,6 +14,8 @@ const idToTemplate = cached(id => {
   return el && el.innerHTML
 })
 
+// 重写平台相关的 $mount 方法，增加编译能力
+// 注册Vue.compile方法，传递一个HTML字符串返回render函数
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,
@@ -36,6 +38,7 @@ Vue.prototype.$mount = function (
     if (template) {
       if (typeof template === 'string') {
         if (template.charAt(0) === '#') {
+          // 尝试获取根节点的 template 属性
           template = idToTemplate(template)
           /* istanbul ignore if */
           if (process.env.NODE_ENV !== 'production' && !template) {
@@ -46,6 +49,7 @@ Vue.prototype.$mount = function (
           }
         }
       } else if (template.nodeType) {
+        // 尝试获根节点的innerHTML
         template = template.innerHTML
       } else {
         if (process.env.NODE_ENV !== 'production') {
@@ -54,6 +58,7 @@ Vue.prototype.$mount = function (
         return this
       }
     } else if (el) {
+      // 尝试获取根节点的 el 属性
       template = getOuterHTML(el)
     }
     if (template) {

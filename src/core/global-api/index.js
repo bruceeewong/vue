@@ -51,6 +51,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
     return obj
   }
 
+  // 初始化 Vue.options 对象，并给其扩展
   Vue.options = Object.create(null)
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
@@ -62,8 +63,11 @@ export function initGlobalAPI (Vue: GlobalAPI) {
 
   extend(Vue.options.components, builtInComponents)
 
+  // 注册 Vue.use 来注册插件
   initUse(Vue)
+  // 注册 Vue.mixin 来实现混入
   initMixin(Vue)
+  // 注册 Vue.extend 基于传入的 options 返回一个组件的构造函数
   initExtend(Vue)
   initAssetRegisters(Vue)
 }
