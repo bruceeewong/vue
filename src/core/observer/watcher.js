@@ -103,6 +103,7 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
+      // 这里调用的是 updateComponent 调用 vm._update
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {

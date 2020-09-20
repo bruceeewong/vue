@@ -15,10 +15,10 @@
   <script>
     const vm = new Vue({
       el: '#app',
-      // template: '<h1>{{ msg }}</h1>',  // runtime版本无法编译模板字符串，转为render函数
-      render(h) {
-        return h('h1', this.msg)
-      },
+      template: '<h1>{{ msg }}</h1>',  // runtime版本无法编译模板字符串，转为render函数
+      // render(h) {
+      //   return h('h1', this.msg)
+      // },
       data: {
         msg: 'Hello Vue'
       }

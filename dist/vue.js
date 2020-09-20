@@ -4062,6 +4062,7 @@
         measure(("vue " + name + " patch"), startTag, endTag);
       };
     } else {
+      // 仅仅定义实例的 update 函数
       updateComponent = function () {
         vm._update(vm._render(), hydrating);
       };
@@ -4070,6 +4071,7 @@
     // we set this to vm._watcher inside the watcher's constructor
     // since the watcher's initial patch may call $forceUpdate (e.g. inside child
     // component's mounted hook), which relies on vm._watcher being already defined
+    // updateComponent 由watcher 调用
     new Watcher(vm, updateComponent, noop, {
       before: function before () {
         if (vm._isMounted && !vm._isDestroyed) {
@@ -4083,7 +4085,7 @@
     // mounted is called for render-created child components in its inserted hook
     if (vm.$vnode == null) {
       vm._isMounted = true;
-      callHook(vm, 'mounted');
+      callHook(vm, 'mounted');  // 触发 mounted 钩子
     }
     return vm
   }
@@ -4475,6 +4477,7 @@
     var value;
     var vm = this.vm;
     try {
+      // 这里调用的是 updateComponent 调用 vm._update
       value = this.getter.call(vm, vm);
     } catch (e) {
       if (this.user) {
