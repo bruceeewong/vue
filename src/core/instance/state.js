@@ -48,14 +48,19 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  // 初始化 props
   if (opts.props) initProps(vm, opts.props)
+  // 初始化 methods
   if (opts.methods) initMethods(vm, opts.methods)
+  // 初始化 data
   if (opts.data) {
     initData(vm)
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
+  // 初始化 computed
   if (opts.computed) initComputed(vm, opts.computed)
+  // 初始化 watch
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -85,6 +90,7 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      // 转为响应式数据
       defineReactive(props, key, value, () => {
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
@@ -97,11 +103,13 @@ function initProps (vm: Component, propsOptions: Object) {
         }
       })
     } else {
+      // 转为响应式数据
       defineReactive(props, key, value)
     }
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
+    // 将属性注入到 vm 实例，使用更方便
     if (!(key in vm)) {
       proxy(vm, `_props`, key)
     }
@@ -124,11 +132,13 @@ function initData (vm: Component) {
   }
   // proxy data on instance
   const keys = Object.keys(data)
+  // 获取 props / methods
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
   while (i--) {
     const key = keys[i]
+    // 判断是否与 props / methods 重名
     if (process.env.NODE_ENV !== 'production') {
       if (methods && hasOwn(methods, key)) {
         warn(
@@ -144,6 +154,7 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 将当前 data 注入实例上, 转为响应式
       proxy(vm, `_data`, key)
     }
   }
@@ -263,6 +274,7 @@ function initMethods (vm: Component, methods: Object) {
   const props = vm.$options.props
   for (const key in methods) {
     if (process.env.NODE_ENV !== 'production') {
+      // 判断传入的是不是 function
       if (typeof methods[key] !== 'function') {
         warn(
           `Method "${key}" has type "${typeof methods[key]}" in the component definition. ` +
@@ -270,12 +282,14 @@ function initMethods (vm: Component, methods: Object) {
           vm
         )
       }
+      // 不允许与 prop 重名
       if (props && hasOwn(props, key)) {
         warn(
           `Method "${key}" has already been defined as a prop.`,
           vm
         )
       }
+      // 不建议以 $ _ 开头
       if ((key in vm) && isReserved(key)) {
         warn(
           `Method "${key}" conflicts with an existing Vue instance method. ` +
@@ -283,6 +297,7 @@ function initMethods (vm: Component, methods: Object) {
         )
       }
     }
+    // 将方法注入 vm 实例, 改变this指向
     vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
   }
 }

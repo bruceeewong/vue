@@ -51,15 +51,20 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    initLifecycle(vm)  // vm生命周期相关变量的初始化：$children / $parent / $root / $refs
-    initEvents(vm)  // 初始化当前的事件
+    // vm生命周期相关变量的初始化
+    initLifecycle(vm)  // $children / $parent / $root / $refs
+    // 初始化当前的事件
+    initEvents(vm)
     // 初始化 vm 的编译render
     // $slot / $scopedSlots / c / $createElement / $attrs / $listeners
     initRender(vm) 
+    // 调用 beforeCreate 钩子
     callHook(vm, 'beforeCreate')
-    initInjections(vm) // 把inject的成员注入到vm上, resolve injections before data/props
+    // 把inject的成员注入到vm上
+    initInjections(vm) // resolve injections before data/props
     initState(vm)  // 初始化 _props / methods / _data / computed / watch
     initProvide(vm) // 初始化 provide, resolve provide after data/props
+    // 调用 created 钩子
     callHook(vm, 'created')
 
     /* istanbul ignore if */
@@ -69,6 +74,7 @@ export function initMixin (Vue: Class<Component>) {
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
+    // 调用 $mount() 挂载
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
