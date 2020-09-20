@@ -188,6 +188,8 @@ export function mountComponent (
   } else {
     // 仅仅定义实例的 update 函数
     updateComponent = () => {
+      // render 生成虚拟dom
+      // update 生成真实DOM，并更新视图
       vm._update(vm._render(), hydrating)
     }
   }
@@ -195,7 +197,7 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
-  // updateComponent 由watcher 调用
+  // updateComponent 由 watcher 调用
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {

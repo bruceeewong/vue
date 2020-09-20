@@ -741,17 +741,23 @@
       // order
       subs.sort(function (a, b) { return a.id - b.id; });
     }
+    // 调用每个观察者的 update 方法
     for (var i = 0, l = subs.length; i < l; i++) {
       subs[i].update();
     }
   };
 
+  // Dep.target 用来存放目前正在使用的 watcher
+  // 全局唯一、并且一次只能只有一个 watcher 被使用
   // The current target watcher being evaluated.
   // This is globally unique because only one watcher
   // can be evaluated at a time.
   Dep.target = null;
   var targetStack = [];
 
+  // 入栈并将当前 watcher 赋值给 Dep.target
+  // 父子组件嵌套的时候，先把父组件的 watcher 入栈
+  // 再去处理子组件的 watcher, 子组件的处理完后，再把父组件对应的 watcher 出栈，继续操作
   function pushTarget (target) {
     targetStack.push(target);
     Dep.target = target;
@@ -858,8 +864,9 @@
    */
 
   var arrayProto = Array.prototype;
+  // 使用数组的原型创建一个新的对象
   var arrayMethods = Object.create(arrayProto);
-
+  // 要修改数组元素的方法
   var methodsToPatch = [
     'push',
     'pop',
@@ -880,8 +887,12 @@
       var args = [], len = arguments.length;
       while ( len-- ) args[ len ] = arguments[ len ];
 
+      // 执行数组原有的方法
       var result = original.apply(this, args);
+
+      // 获取数组对象的 __ob__ 对象
       var ob = this.__ob__;
+
       var inserted;
       switch (method) {
         case 'push':
@@ -889,9 +900,10 @@
           inserted = args;
           break
         case 'splice':
-          inserted = args.slice(2);
+          inserted = args.slice(2);  // 第三个参数是新增的元素
           break
       }
+      // 对于插入的新元素，重新遍历数组元素，设置为响应式
       if (inserted) { ob.observeArray(inserted); }
       // notify change
       ob.dep.notify();
@@ -923,15 +935,22 @@
     this.value = value;
     this.dep = new Dep();
     this.vmCount = 0;
-    def(value, '__ob__', this);
+    def(value, '__ob__', this);// 定义__ob__属性，不可枚举
+
+    // 数组的响应式处理
     if (Array.isArray(value)) {
+      // 兼容性处理
       if (hasProto) {
+        // 通过设置__proto__, 修补数组原有方法
         protoAugment(value, arrayMethods);
       } else {
+        // 通过遍历属性和拷贝值，修补数组原有方法
         copyAugment(value, arrayMethods, arrayKeys);
       }
       this.observeArray(value);
     } else {
+      // 对于value为对象的处理
+      // 遍历对象中所有属性，转为 getter / setter
       this.walk(value);
     }
   };
@@ -987,12 +1006,15 @@
    * or the existing observer if the value already has one.
    */
   function observe (value, asRootData) {
+    // 判断 value 是否为对象
     if (!isObject(value) || value instanceof VNode) {
       return
     }
+    // 获取 __ob__ 属性
     var ob;
     if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
       ob = value.__ob__;
+      // 判断是否可以做响应式处理
     } else if (
       shouldObserve &&
       !isServerRendering() &&
@@ -1000,6 +1022,7 @@
       Object.isExtensible(value) &&
       !value._isVue
     ) {
+      // 创建一个 observer 对象
       ob = new Observer(value);
     }
     if (asRootData && ob) {
@@ -1018,13 +1041,16 @@
     customSetter,
     shallow
   ) {
+    // 创建每个属性的依赖的对象实例
     var dep = new Dep();
 
+    // 读取 obj 的属性描述符对象，检查属性是否可定义
     var property = Object.getOwnPropertyDescriptor(obj, key);
     if (property && property.configurable === false) {
       return
     }
 
+    // 提供用户预定义的存取器
     // cater for pre-defined getter/setters
     var getter = property && property.get;
     var setter = property && property.set;
@@ -1032,17 +1058,28 @@
       val = obj[key];
     }
 
+    // 判断是否递归观察，并将紫属性都转换成 getter / setter, 返回子属性观察对象
     var childOb = !shallow && observe(val);
     Object.defineProperty(obj, key, {
       enumerable: true,
       configurable: true,
       get: function reactiveGetter () {
+        // 如果预定义的 getter 存在，则 value 等于 getter 调用的返回值
+        // 否则直接赋予属性
         var value = getter ? getter.call(obj) : val;
+
+        // 如果存在当前依赖目标，即 watcher 对象，则建立依赖
         if (Dep.target) {
+          // 收集当前属性的依赖
           dep.depend();
+
+          // 如果当前属性的值也存在observer(为obj或arr)
           if (childOb) {
-            childOb.dep.depend();
+            childOb.dep.depend();  // 收集子项依赖
+
+            // 如果属性是数组，则特殊处理收集数组对象依赖
             if (Array.isArray(value)) {
+              // 收集数组对象的依赖，遍历数组内部，如果还有observer，一并收集了
               dependArray(value);
             }
           }
@@ -1050,9 +1087,11 @@
         return value
       },
       set: function reactiveSetter (newVal) {
+        // 获取预定义的 getter
         var value = getter ? getter.call(obj) : val;
         /* eslint-disable no-self-compare */
         if (newVal === value || (newVal !== newVal && value !== value)) {
+          // 第二个判断处理 NaN 的比较
           return
         }
         /* eslint-enable no-self-compare */
@@ -1062,11 +1101,14 @@
         // #7981: for accessor properties without setter
         if (getter && !setter) { return }
         if (setter) {
+          // 如果有 setter，调用预定义的 setter
           setter.call(obj, newVal);
         } else {
           val = newVal;
         }
+        // 如果是新值，则递归设置子属性为响应式
         childOb = !shallow && observe(newVal);
+        // 派发更新（发布更改通知）
         dep.notify();
       }
     });
@@ -1119,6 +1161,7 @@
       warn(("Cannot delete reactive property on undefined, null, or primitive value: " + ((target))));
     }
     if (Array.isArray(target) && isValidArrayIndex(key)) {
+      // 数组 splice 已经做过响应式处理
       target.splice(key, 1);
       return
     }
@@ -1137,6 +1180,7 @@
     if (!ob) {
       return
     }
+    // 如果是响应式对象，通知
     ob.dep.notify();
   }
 
@@ -4064,6 +4108,8 @@
     } else {
       // 仅仅定义实例的 update 函数
       updateComponent = function () {
+        // render 生成虚拟dom
+        // update 生成真实DOM，并更新视图
         vm._update(vm._render(), hydrating);
       };
     }
@@ -4071,7 +4117,7 @@
     // we set this to vm._watcher inside the watcher's constructor
     // since the watcher's initial patch may call $forceUpdate (e.g. inside child
     // component's mounted hook), which relies on vm._watcher being already defined
-    // updateComponent 由watcher 调用
+    // updateComponent 由 watcher 调用
     new Watcher(vm, updateComponent, noop, {
       before: function before () {
         if (vm._isMounted && !vm._isDestroyed) {
@@ -4381,7 +4427,7 @@
   function queueWatcher (watcher) {
     var id = watcher.id;
     if (has[id] == null) {
-      has[id] = true;
+      has[id] = true;  // 标记已处理
       if (!flushing) {
         queue.push(watcher);
       } else {
@@ -4428,6 +4474,7 @@
     if (isRenderWatcher) {
       vm._watcher = this;
     }
+    // 存储所有的 watcher (渲染/computed)
     vm._watchers.push(this);
     // options
     if (options) {
@@ -4441,7 +4488,7 @@
     }
     this.cb = cb;
     this.id = ++uid$1; // uid for batching
-    this.active = true;
+    this.active = true; 
     this.dirty = this.lazy; // for lazy watchers
     this.deps = [];
     this.newDeps = [];
@@ -4450,9 +4497,12 @@
     this.expression =  expOrFn.toString()
       ;
     // parse expression for getter
+    // 如果 expOrFn 是函数，直接赋值给 getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn;
     } else {
+      // expOrFn 是字符串的时候，例如 watch: { 'person.name': function ... }
+      // parsePath('person.name')返回一个函数获取 person.name 的值
       this.getter = parsePath(expOrFn);
       if (!this.getter) {
         this.getter = noop;
@@ -4464,6 +4514,8 @@
         );
       }
     }
+
+    // Watcher 创建时，会调用属性的getter，将此watcher关联到属性的dep的subs数组中
     this.value = this.lazy
       ? undefined
       : this.get();
@@ -4473,11 +4525,13 @@
    * Evaluate the getter, and re-collect dependencies.
    */
   Watcher.prototype.get = function get () {
+    // 设置Dep静态属性 target 为当前 watcher
     pushTarget(this);
     var value;
     var vm = this.vm;
     try {
       // 这里调用的是 updateComponent 调用 vm._update
+      // 此时 虚拟DOM 就渲染到真实 DOM 上
       value = this.getter.call(vm, vm);
     } catch (e) {
       if (this.user) {
@@ -4491,7 +4545,9 @@
       if (this.deep) {
         traverse(value);
       }
+      // 弹出自己，改变当前活动的 target 
       popTarget();
+      // watcher 中的 dep 移除?
       this.cleanupDeps();
     }
     return value
@@ -4646,6 +4702,7 @@
     if (opts.data) {
       initData(vm);
     } else {
+      // 如果未定义 data, 创建空的，并设为响应式
       observe(vm._data = {}, true /* asRootData */);
     }
     // 初始化 computed

@@ -164,7 +164,7 @@ function callActivatedHooks (queue) {
 export function queueWatcher (watcher: Watcher) {
   const id = watcher.id
   if (has[id] == null) {
-    has[id] = true
+    has[id] = true  // 标记已处理
     if (!flushing) {
       queue.push(watcher)
     } else {

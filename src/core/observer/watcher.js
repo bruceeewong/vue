@@ -53,6 +53,7 @@ export default class Watcher {
     if (isRenderWatcher) {
       vm._watcher = this
     }
+    // 存储所有的 watcher (渲染/computed)
     vm._watchers.push(this)
     // options
     if (options) {
@@ -66,7 +67,7 @@ export default class Watcher {
     }
     this.cb = cb
     this.id = ++uid // uid for batching
-    this.active = true
+    this.active = true 
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -76,9 +77,12 @@ export default class Watcher {
       ? expOrFn.toString()
       : ''
     // parse expression for getter
+    // 如果 expOrFn 是函数，直接赋值给 getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
+      // expOrFn 是字符串的时候，例如 watch: { 'person.name': function ... }
+      // parsePath('person.name')返回一个函数获取 person.name 的值
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -90,6 +94,8 @@ export default class Watcher {
         )
       }
     }
+
+    // Watcher 创建时，会调用属性的getter，将此watcher关联到属性的dep的subs数组中
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -99,11 +105,13 @@ export default class Watcher {
    * Evaluate the getter, and re-collect dependencies.
    */
   get () {
+    // 设置Dep静态属性 target 为当前 watcher
     pushTarget(this)
     let value
     const vm = this.vm
     try {
       // 这里调用的是 updateComponent 调用 vm._update
+      // 此时 虚拟DOM 就渲染到真实 DOM 上
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -117,7 +125,9 @@ export default class Watcher {
       if (this.deep) {
         traverse(value)
       }
+      // 弹出自己，改变当前活动的 target 
       popTarget()
+      // watcher 中的 dep 移除?
       this.cleanupDeps()
     }
     return value

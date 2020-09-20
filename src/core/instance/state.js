@@ -56,6 +56,7 @@ export function initState (vm: Component) {
   if (opts.data) {
     initData(vm)
   } else {
+    // 如果未定义 data, 创建空的，并设为响应式
     observe(vm._data = {}, true /* asRootData */)
   }
   // 初始化 computed
