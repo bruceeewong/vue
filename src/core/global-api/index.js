@@ -19,7 +19,7 @@ import {
 } from '../util/index'
 
 export function initGlobalAPI (Vue: GlobalAPI) {
-  // config
+  // 初始化 Vue.config 对象
   const configDef = {}
   configDef.get = () => config
   if (process.env.NODE_ENV !== 'production') {
@@ -52,6 +52,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   }
 
   // 初始化 Vue.options 对象，并给其扩展
+  // components / directive / filters
   Vue.options = Object.create(null)
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
@@ -59,8 +60,10 @@ export function initGlobalAPI (Vue: GlobalAPI) {
 
   // this is used to identify the "base" constructor to extend all plain-object
   // components with in Weex's multi-instance scenarios.
+  // 记录原构造函数
   Vue.options._base = Vue
 
+  // 注册内置组件 keep-alive
   extend(Vue.options.components, builtInComponents)
 
   // 注册 Vue.use 来注册插件
@@ -69,5 +72,6 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   initMixin(Vue)
   // 注册 Vue.extend 基于传入的 options 返回一个组件的构造函数
   initExtend(Vue)
+  // 注册 Vue.directive / Vue.component / Vue.filter
   initAssetRegisters(Vue)
 }
