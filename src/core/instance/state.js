@@ -363,15 +363,20 @@ export function stateMixin (Vue: Class<Component>) {
     cb: any,
     options?: Object
   ): Function {
+    // 获取 Vue 实例 this
     const vm: Component = this
     if (isPlainObject(cb)) {
+      // 判断如果 cb 是对象，指向 createWatcher
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
+    // 标记为 用户watcher
     options.user = true
     const watcher = new Watcher(vm, expOrFn, cb, options)
+
     if (options.immediate) {
       try {
+        // 立即执行一次cb回调，并且把当前值传入
         cb.call(vm, watcher.value)
       } catch (error) {
         handleError(error, vm, `callback for immediate watcher "${watcher.expression}"`)

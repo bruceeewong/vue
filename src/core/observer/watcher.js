@@ -203,6 +203,7 @@ export default class Watcher {
         this.value = value
         if (this.user) {
           try {
+            // 如果用户watcher，执行用户的回调
             this.cb.call(this.vm, value, oldValue)
           } catch (e) {
             handleError(e, this.vm, `callback for watcher "${this.expression}"`)

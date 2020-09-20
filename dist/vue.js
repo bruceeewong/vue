@@ -4623,6 +4623,7 @@
         this.value = value;
         if (this.user) {
           try {
+            // 如果用户watcher，执行用户的回调
             this.cb.call(this.vm, value, oldValue);
           } catch (e) {
             handleError(e, this.vm, ("callback for watcher \"" + (this.expression) + "\""));
@@ -5008,15 +5009,20 @@
       cb,
       options
     ) {
+      // 获取 Vue 实例 this
       var vm = this;
       if (isPlainObject(cb)) {
+        // 判断如果 cb 是对象，指向 createWatcher
         return createWatcher(vm, expOrFn, cb, options)
       }
       options = options || {};
+      // 标记为 用户watcher
       options.user = true;
       var watcher = new Watcher(vm, expOrFn, cb, options);
+
       if (options.immediate) {
         try {
+          // 立即执行一次cb回调，并且把当前值传入
           cb.call(vm, watcher.value);
         } catch (error) {
           handleError(error, vm, ("callback for immediate watcher \"" + (watcher.expression) + "\""));
