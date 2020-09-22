@@ -34,6 +34,7 @@ export function createElement (
   alwaysNormalize: boolean
 ): VNode | Array<VNode> {
   if (Array.isArray(data) || isPrimitive(data)) {
+    // 处理省略 data 参数的情况
     normalizationType = children
     children = data
     data = undefined
@@ -59,6 +60,7 @@ export function _createElement (
     )
     return createEmptyVNode()
   }
+  // <component v-bind:is="currentTabComponent"></component>
   // object syntax in v-bind
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
@@ -80,6 +82,7 @@ export function _createElement (
     }
   }
   // support single function children as default scoped slot
+  // 处理作用域插槽
   if (Array.isArray(children) &&
     typeof children[0] === 'function'
   ) {
@@ -88,8 +91,10 @@ export function _createElement (
     children.length = 0
   }
   if (normalizationType === ALWAYS_NORMALIZE) {
+    // 处理用户传入的render函数, 返回展平后的一位数组
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
+    // 函数式组件
     children = simpleNormalizeChildren(children)
   }
   let vnode, ns
@@ -98,7 +103,10 @@ export function _createElement (
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
     if (config.isReservedTag(tag)) {
       // platform built-in elements
-      if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn)) {
+      // 官方HTML tag
+      if (process.env.NODE_ENV !== 'production'
+        && isDef(data)
+        && isDef(data.nativeOn)) {
         warn(
           `The .native modifier for v-on is only valid on components but it was used on <${tag}>.`,
           context
@@ -108,13 +116,16 @@ export function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
-    } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
+    // 判断是否是自定义组件
+    } else if ((!data || !data.pre)
+        && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
+      // 不识别的标签名
       vnode = new VNode(
         tag, data, children,
         undefined, undefined, context
@@ -128,9 +139,10 @@ export function _createElement (
     return vnode
   } else if (isDef(vnode)) {
     if (isDef(ns)) applyNS(vnode, ns)
-    if (isDef(data)) registerDeepBindings(data)
+    if (isDef(data)) registerDeepBindings(data)  // 给vnode绑定传入的选项
     return vnode
   } else {
+    // 否则返回空的注释节点
     return createEmptyVNode()
   }
 }
