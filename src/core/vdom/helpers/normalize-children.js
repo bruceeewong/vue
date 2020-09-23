@@ -30,10 +30,10 @@ export function simpleNormalizeChildren (children: any) {
 // is needed to cater to all possible types of children values.
 export function normalizeChildren (children: any): ?Array<VNode> {
   return isPrimitive(children)
-    ? [createTextVNode(children)]
-    : Array.isArray(children)
-      ? normalizeArrayChildren(children) // 数组展平
-      : undefined
+    ? [createTextVNode(children)]  // 如果 children 是基础类型,创建文本节点
+    : Array.isArray(children) // 否则判断是否是数组
+      ? normalizeArrayChildren(children) // 数组展平,返回一位数组
+      : undefined  // 否则返回 Undefined
 }
 
 function isTextNode (node): boolean {
