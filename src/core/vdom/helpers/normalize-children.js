@@ -16,9 +16,10 @@ import { isFalse, isTrue, isDef, isUndef, isPrimitive } from 'shared/util'
 // thing with Array.prototype.concat. It is guaranteed to be only 1-level deep
 // because functional components already normalize their own children.
 export function simpleNormalizeChildren (children: any) {
+  // 二维数组展开为一维数组
   for (let i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {
-      return Array.prototype.concat.apply([], children)  // 展开为一维数组
+      return Array.prototype.concat.apply([], children)  // 如果children元素也有数组，会自动展开
     }
   }
   return children
@@ -32,7 +33,7 @@ export function normalizeChildren (children: any): ?Array<VNode> {
   return isPrimitive(children)
     ? [createTextVNode(children)]  // 如果 children 是基础类型,创建文本节点
     : Array.isArray(children) // 否则判断是否是数组
-      ? normalizeArrayChildren(children) // 数组展平,返回一位数组
+      ? normalizeArrayChildren(children) // 递归展平数组,返回一位数组
       : undefined  // 否则返回 Undefined
 }
 
