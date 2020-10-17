@@ -112,6 +112,7 @@ export function createComponent (
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 如果 Ctor 是选项对象，则调用extend创造构造函数
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
@@ -127,6 +128,7 @@ export function createComponent (
 
   // async component
   let asyncFactory
+  // 没有cid，说明是异步组件
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
     Ctor = resolveAsyncComponent(asyncFactory, baseCtor)
@@ -220,6 +222,8 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+
+  // 创建组件实例
   return new vnode.componentOptions.Ctor(options)
 }
 
@@ -230,6 +234,7 @@ function installComponentHooks (data: VNodeData) {
     const existing = hooks[key]
     const toMerge = componentVNodeHooks[key]
     if (existing !== toMerge && !(existing && existing._merged)) {
+      // mergeHook，先调用用户的钩子，再调用已存在的
       hooks[key] = existing ? mergeHook(toMerge, existing) : toMerge
     }
   }

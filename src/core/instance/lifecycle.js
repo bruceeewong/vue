@@ -23,7 +23,7 @@ export let isUpdatingChildComponent: boolean = false
 
 export function setActiveInstance(vm: Component) {
   const prevActiveInstance = activeInstance
-  activeInstance = vm
+  activeInstance = vm  // vm 是父组件对象
   return () => {
     activeInstance = prevActiveInstance
   }
@@ -38,10 +38,10 @@ export function initLifecycle (vm: Component) {
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
     }
-    parent.$children.push(vm)
+    parent.$children.push(vm)  // 建立父子组件联系
   }
 
-  vm.$parent = parent
+  vm.$parent = parent // 建立父子组件联系
   vm.$root = parent ? parent.$root : vm
 
   vm.$children = []

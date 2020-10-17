@@ -33,7 +33,9 @@ Vue.prototype.$mount = function (
 
   const options = this.$options
   // resolve template/el and convert to render function
+  // 如果不存在 render 属性
   if (!options.render) {
+    // 则 template 取 options.template 属性
     let template = options.template
     if (template) {
       if (typeof template === 'string') {
@@ -75,6 +77,8 @@ Vue.prototype.$mount = function (
         delimiters: options.delimiters,
         comments: options.comments
       }, this)
+
+      // 把 template 转为 render 函数，存入option.render中
       options.render = render
       options.staticRenderFns = staticRenderFns
 
@@ -85,6 +89,8 @@ Vue.prototype.$mount = function (
       }
     }
   }
+
+  // 返回执行 render 函数的结果
   return mount.call(this, el, hydrating)
 }
 

@@ -151,6 +151,7 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
+    // 将组件创建为vnode
     vnode = createComponent(tag, data, context, children)
   }
 
