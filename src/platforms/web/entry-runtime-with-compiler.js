@@ -14,7 +14,7 @@ const idToTemplate = cached(id => {
   return el && el.innerHTML
 })
 
-// 重写平台相关的 $mount 方法，增加编译能力
+// [重写] 平台相关的 $mount 方法，增加编译能力
 // 注册Vue.compile方法，传递一个HTML字符串返回render函数
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (

@@ -147,6 +147,16 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * 挂载组件
+ * 执行BeforeMount钩子
+ * 创建watcher，定义update回调
+ * 执行 mount 钩子
+ * 返回组件实例
+ * @param {*} vm
+ * @param {*} el
+ * @param {*} hydrating
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,
@@ -173,6 +183,8 @@ export function mountComponent (
       }
     }
   }
+
+  // 执行组件 beforeMount 钩子函数
   callHook(vm, 'beforeMount')
 
   let updateComponent
@@ -206,6 +218,7 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+
   // updateComponent 由 watcher 调用
   new Watcher(vm, updateComponent, noop, {
     before () {
@@ -220,7 +233,8 @@ export function mountComponent (
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
     vm._isMounted = true
-    callHook(vm, 'mounted')  // 触发 mounted 钩子
+    // 触发 mounted 钩子
+    callHook(vm, 'mounted')
   }
   return vm
 }
