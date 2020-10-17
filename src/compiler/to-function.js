@@ -9,6 +9,11 @@ type CompiledFunctionResult = {
   staticRenderFns: Array<Function>;
 };
 
+/**
+ * 将字符串形式的js代码转换为函数
+ * @param {*} code
+ * @param {*} errors
+ */
 function createFunction (code, errors) {
   try {
     return new Function(code)
@@ -19,6 +24,7 @@ function createFunction (code, errors) {
 }
 
 export function createCompileToFunctionFn (compile: Function): Function {
+  // 通过闭包缓存编译后的结果
   const cache = Object.create(null)
 
   return function compileToFunctions (
@@ -26,6 +32,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     options?: CompilerOptions,
     vm?: Component
   ): CompiledFunctionResult {
+    // vue $options
     options = extend({}, options)
     const warn = options.warn || baseWarn
     delete options.warn
@@ -49,14 +56,19 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // check cache
+    // 1. 读取缓存中的 CompiledFunctionResult 对象，如果有直接返回
+    // 以编译的内容为 key
     const key = options.delimiters
       ? String(options.delimiters) + template
       : template
+
+    // 是否有缓存
     if (cache[key]) {
       return cache[key]
     }
 
     // compile
+    // 2. 把模板编译位编译对象(render, staticRenderFns)，字符串形式的js代码
     const compiled = compile(template, options)
 
     // check compilation errors/tips
@@ -78,6 +90,8 @@ export function createCompileToFunctionFn (compile: Function): Function {
           )
         }
       }
+
+      // 收集模板编译的错误信息
       if (compiled.tips && compiled.tips.length) {
         if (options.outputSourceRange) {
           compiled.tips.forEach(e => tip(e.msg, vm))
@@ -90,6 +104,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     // turn code into functions
     const res = {}
     const fnGenErrors = []
+    // 将字符串形式代码，转换成函数
     res.render = createFunction(compiled.render, fnGenErrors)
     res.staticRenderFns = compiled.staticRenderFns.map(code => {
       return createFunction(code, fnGenErrors)
@@ -109,6 +124,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
       }
     }
 
+    // 缓存结果并返回
     return (cache[key] = res)
   }
 }

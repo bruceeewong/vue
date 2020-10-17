@@ -10,6 +10,9 @@ type TransformFunction = (el: ASTElement, code: string) => string;
 type DataGenFunction = (el: ASTElement) => string;
 type DirectiveFunction = (el: ASTElement, dir: ASTDirective, warn: Function) => boolean;
 
+/**
+ * 代码生成中相关状态
+ */
 export class CodegenState {
   options: CompilerOptions;
   warn: Function;
@@ -52,12 +55,18 @@ export function generate (
   }
 }
 
+/**
+ * 返回 字符串 形式的代码
+ * @param {*} el
+ * @param {*} state
+ */
 export function genElement (el: ASTElement, state: CodegenState): string {
   if (el.parent) {
     el.pre = el.pre || el.parent.pre
   }
 
   if (el.staticRoot && !el.staticProcessed) {
+    // 处理静态根节点
     return genStatic(el, state)
   } else if (el.once && !el.onceProcessed) {
     return genOnce(el, state)
@@ -77,6 +86,8 @@ export function genElement (el: ASTElement, state: CodegenState): string {
     } else {
       let data
       if (!el.plain || (el.pre && state.maybeComponent(el))) {
+        // 生成元素的属性/指令/事件等
+        // 处理各种指令，包括 genDirectives (model/text/html)
         data = genData(el, state)
       }
 

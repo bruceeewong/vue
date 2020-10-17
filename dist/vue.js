@@ -3570,8 +3570,12 @@
     // so that we get proper render context inside it.
     // args order: tag, data, children, normalizationType, alwaysNormalize
     // internal version is used by render functions compiled from templates
+
+    // _c 与 $createElement 在于最后一个参数如何处理children
+
     // 对编译生成的 render 进行渲染的方法
     vm._c = function (a, b, c, d) { return createElement(vm, a, b, c, d, false); };
+
     // normalization is always applied for the public version, used in
     // user-written render functions.
     // 对用户手写的render函数进行渲染
@@ -9874,6 +9878,7 @@
   var platformGetTagNamespace;
   var maybeComponent;
 
+  /* 创建AST数据结构 */
   function createASTElement (
     tag,
     attrs,
@@ -10027,6 +10032,8 @@
       shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
       shouldKeepComment: options.comments,
       outputSourceRange: options.outputSourceRange,
+
+      // 解析过程中的回调函数，生成AST
       start: function start (tag, attrs, unary, start$1, end) {
         // check namespace.
         // inherit parent ns if there is one
@@ -10081,6 +10088,7 @@
           element = preTransforms[i](element, options) || element;
         }
 
+        // 处理 <pre /> 标签
         if (!inVPre) {
           processPre(element);
           if (element.pre) {
@@ -10090,10 +10098,11 @@
         if (platformIsPreTag(element.tag)) {
           inPre = true;
         }
+
         if (inVPre) {
           processRawAttrs(element);
         } else if (!element.processed) {
-          // structural directives
+          // 处理结构化指令 structural directives
           processFor(element);
           processIf(element);
           processOnce(element);
@@ -10925,8 +10934,10 @@
     isStaticKey = genStaticKeysCached(options.staticKeys || '');
     isPlatformReservedTag = options.isReservedTag || no;
     // first pass: mark all non-static nodes.
+    // 标记静态节点
     markStatic$1(root);
     // second pass: mark static roots.
+    // 标记静态根节点
     markStaticRoots(root, false);
   }
 
@@ -10943,6 +10954,7 @@
       // do not make component slot content static. this avoids
       // 1. components not able to mutate slot nodes
       // 2. static slot content fails for hot-reloading
+      // 判断是否为组件，不是slot，没有inline-template
       if (
         !isPlatformReservedTag(node.tag) &&
         node.tag !== 'slot' &&
@@ -10950,9 +10962,13 @@
       ) {
         return
       }
+
+      // 遍历 children
       for (var i = 0, l = node.children.length; i < l; i++) {
         var child = node.children[i];
+        // 递归标记子节点
         markStatic$1(child);
+        // 如果有一个子节点不是静态的，整个节点都不能是静态
         if (!child.static) {
           node.static = false;
         }
@@ -10977,6 +10993,8 @@
       // For a node to qualify as a static root, it should have children that
       // are not just static text. Otherwise the cost of hoisting out will
       // outweigh the benefits and it's better off to just always render it fresh.
+      // 如果一个元素内只有文本节点，此时这个元素不是静态的Root
+      // Vue 认为这种优化会带来负面影响
       if (node.static && node.children.length && !(
         node.children.length === 1 &&
         node.children[0].type === 3
@@ -10986,6 +11004,7 @@
       } else {
         node.staticRoot = false;
       }
+      // 检测当前节点的子节点是否右静态的Root
       if (node.children) {
         for (var i = 0, l = node.children.length; i < l; i++) {
           markStaticRoots(node.children[i], isInFor || !!node.for);
@@ -11011,7 +11030,7 @@
       !node.if && !node.for && // not v-if or v-for or v-else
       !isBuiltInTag(node.tag) && // not a built-in
       isPlatformReservedTag(node.tag) && // not a component
-      !isDirectChildOfTemplateFor(node) &&
+      !isDirectChildOfTemplateFor(node) &&  // 不是v-for下的直接子节点
       Object.keys(node).every(isStaticKey)
     ))
   }
@@ -11223,6 +11242,9 @@
 
 
 
+  /**
+   * 代码生成中相关状态
+   */
   var CodegenState = function CodegenState (options) {
     this.options = options;
     this.warn = options.warn || baseWarn;
@@ -11250,12 +11272,18 @@
     }
   }
 
+  /**
+   * 返回 字符串 形式的代码
+   * @param {*} el
+   * @param {*} state
+   */
   function genElement (el, state) {
     if (el.parent) {
       el.pre = el.pre || el.parent.pre;
     }
 
     if (el.staticRoot && !el.staticProcessed) {
+      // 处理静态根节点
       return genStatic(el, state)
     } else if (el.once && !el.onceProcessed) {
       return genOnce(el, state)
@@ -11275,6 +11303,8 @@
       } else {
         var data;
         if (!el.plain || (el.pre && state.maybeComponent(el))) {
+          // 生成元素的属性/指令/事件等
+          // 处理各种指令，包括 genDirectives (model/text/html)
           data = genData$2(el, state);
         }
 
@@ -11952,6 +11982,11 @@
 
 
 
+  /**
+   * 将字符串形式的js代码转换为函数
+   * @param {*} code
+   * @param {*} errors
+   */
   function createFunction (code, errors) {
     try {
       return new Function(code)
@@ -11962,6 +11997,7 @@
   }
 
   function createCompileToFunctionFn (compile) {
+    // 通过闭包缓存编译后的结果
     var cache = Object.create(null);
 
     return function compileToFunctions (
@@ -11969,6 +12005,7 @@
       options,
       vm
     ) {
+      // vue $options
       options = extend({}, options);
       var warn$1 = options.warn || warn;
       delete options.warn;
@@ -11992,14 +12029,19 @@
       }
 
       // check cache
+      // 1. 读取缓存中的 CompiledFunctionResult 对象，如果有直接返回
+      // 以编译的内容为 key
       var key = options.delimiters
         ? String(options.delimiters) + template
         : template;
+
+      // 是否有缓存
       if (cache[key]) {
         return cache[key]
       }
 
       // compile
+      // 2. 把模板编译位编译对象(render, staticRenderFns)，字符串形式的js代码
       var compiled = compile(template, options);
 
       // check compilation errors/tips
@@ -12021,6 +12063,8 @@
             );
           }
         }
+
+        // 收集模板编译的错误信息
         if (compiled.tips && compiled.tips.length) {
           if (options.outputSourceRange) {
             compiled.tips.forEach(function (e) { return tip(e.msg, vm); });
@@ -12033,6 +12077,7 @@
       // turn code into functions
       var res = {};
       var fnGenErrors = [];
+      // 将字符串形式代码，转换成函数
       res.render = createFunction(compiled.render, fnGenErrors);
       res.staticRenderFns = compiled.staticRenderFns.map(function (code) {
         return createFunction(code, fnGenErrors)
@@ -12057,6 +12102,7 @@
         }
       }
 
+      // 缓存结果并返回
       return (cache[key] = res)
     }
   }
@@ -12064,6 +12110,7 @@
   /*  */
 
   function createCompilerCreator (baseCompile) {
+    // baseOptions 平台相关的options
     return function createCompiler (baseOptions) {
       function compile (
         template,
@@ -12077,6 +12124,7 @@
           (tip ? tips : errors).push(msg);
         };
 
+        // 合并 options
         if (options) {
           if ( options.outputSourceRange) {
             // $flow-disable-line
@@ -12117,6 +12165,7 @@
 
         finalOptions.warn = warn;
 
+        // 调用baseCompile编译，记录错误
         var compiled = baseCompile(template.trim(), finalOptions);
         {
           detectErrors(compiled.ast, warn);
@@ -12142,14 +12191,20 @@
     template,
     options
   ) {
+    // 1. parse 把模板转换成 ast 抽象语法树
+    // 抽象语法树，以树的方式描述代码结构
     var ast = parse(template.trim(), options);
     if (options.optimize !== false) {
+      // 2. 优化抽象语法树
       optimize(ast, options);
     }
+    // 3. 将抽象语法树生成字符串形式的js代码
     var code = generate(ast, options);
     return {
       ast: ast,
+      // 渲染函数
       render: code.render,
+      // 静态渲染函数，生成静态 VNode 树
       staticRenderFns: code.staticRenderFns
     }
   });
@@ -12234,6 +12289,7 @@
           mark('compile');
         }
 
+        // 把 template 转为 render 函数
         var ref = compileToFunctions(template, {
           outputSourceRange: "development" !== 'production',
           shouldDecodeNewlines: shouldDecodeNewlines,

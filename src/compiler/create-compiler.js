@@ -5,6 +5,7 @@ import { detectErrors } from './error-detector'
 import { createCompileToFunctionFn } from './to-function'
 
 export function createCompilerCreator (baseCompile: Function): Function {
+  // baseOptions 平台相关的options
   return function createCompiler (baseOptions: CompilerOptions) {
     function compile (
       template: string,
@@ -18,6 +19,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
         (tip ? tips : errors).push(msg)
       }
 
+      // 合并 options
       if (options) {
         if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
           // $flow-disable-line
@@ -58,6 +60,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
 
       finalOptions.warn = warn
 
+      // 调用baseCompile编译，记录错误
       const compiled = baseCompile(template.trim(), finalOptions)
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)

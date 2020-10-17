@@ -57,6 +57,7 @@ let platformMustUseProp
 let platformGetTagNamespace
 let maybeComponent
 
+/* 创建AST数据结构 */
 export function createASTElement (
   tag: string,
   attrs: Array<ASTAttr>,
@@ -210,6 +211,8 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
+
+    // 解析过程中的回调函数，生成AST
     start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
@@ -264,6 +267,7 @@ export function parse (
         element = preTransforms[i](element, options) || element
       }
 
+      // 处理 <pre /> 标签
       if (!inVPre) {
         processPre(element)
         if (element.pre) {
@@ -273,10 +277,11 @@ export function parse (
       if (platformIsPreTag(element.tag)) {
         inPre = true
       }
+
       if (inVPre) {
         processRawAttrs(element)
       } else if (!element.processed) {
-        // structural directives
+        // 处理结构化指令 structural directives
         processFor(element)
         processIf(element)
         processOnce(element)

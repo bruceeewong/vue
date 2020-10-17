@@ -23,8 +23,10 @@ export function optimize (root: ?ASTElement, options: CompilerOptions) {
   isStaticKey = genStaticKeysCached(options.staticKeys || '')
   isPlatformReservedTag = options.isReservedTag || no
   // first pass: mark all non-static nodes.
+  // 标记静态节点
   markStatic(root)
   // second pass: mark static roots.
+  // 标记静态根节点
   markStaticRoots(root, false)
 }
 
@@ -41,6 +43,7 @@ function markStatic (node: ASTNode) {
     // do not make component slot content static. this avoids
     // 1. components not able to mutate slot nodes
     // 2. static slot content fails for hot-reloading
+    // 判断是否为组件，不是slot，没有inline-template
     if (
       !isPlatformReservedTag(node.tag) &&
       node.tag !== 'slot' &&
@@ -48,9 +51,13 @@ function markStatic (node: ASTNode) {
     ) {
       return
     }
+
+    // 遍历 children
     for (let i = 0, l = node.children.length; i < l; i++) {
       const child = node.children[i]
+      // 递归标记子节点
       markStatic(child)
+      // 如果有一个子节点不是静态的，整个节点都不能是静态
       if (!child.static) {
         node.static = false
       }
@@ -75,6 +82,8 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
     // For a node to qualify as a static root, it should have children that
     // are not just static text. Otherwise the cost of hoisting out will
     // outweigh the benefits and it's better off to just always render it fresh.
+    // 如果一个元素内只有文本节点，此时这个元素不是静态的Root
+    // Vue 认为这种优化会带来负面影响
     if (node.static && node.children.length && !(
       node.children.length === 1 &&
       node.children[0].type === 3
@@ -84,6 +93,7 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
     } else {
       node.staticRoot = false
     }
+    // 检测当前节点的子节点是否右静态的Root
     if (node.children) {
       for (let i = 0, l = node.children.length; i < l; i++) {
         markStaticRoots(node.children[i], isInFor || !!node.for)
@@ -109,7 +119,7 @@ function isStatic (node: ASTNode): boolean {
     !node.if && !node.for && // not v-if or v-for or v-else
     !isBuiltInTag(node.tag) && // not a built-in
     isPlatformReservedTag(node.tag) && // not a component
-    !isDirectChildOfTemplateFor(node) &&
+    !isDirectChildOfTemplateFor(node) &&  // 不是v-for下的直接子节点
     Object.keys(node).every(isStaticKey)
   ))
 }
